@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { GiftResult } from "@/types";
 
 const KEY = "muhtar_history";
 
 export interface HistoryEntry {
   id: string;
-  query: { gender: string; age: number; interests: string[]; budget: number };
-  results: GiftResult[];
-  createdAt: string;
+  type: "gift" | "comparison";
+  query: string;
+  credits: number;
+  at: string;
 }
 
 export function useSearchHistory() {
@@ -17,14 +17,16 @@ export function useSearchHistory() {
 
   useEffect(() => {
     const raw = localStorage.getItem(KEY);
-    if (raw) setHistory(JSON.parse(raw));
+    if (raw) {
+      try { setHistory(JSON.parse(raw)); } catch { /* ignore */ }
+    }
   }, []);
 
-  const addEntry = useCallback((entry: Omit<HistoryEntry, "id" | "createdAt">) => {
+  const addEntry = useCallback((entry: Omit<HistoryEntry, "id" | "at">) => {
     const next: HistoryEntry = {
       ...entry,
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
+      at: new Date().toISOString(),
     };
     setHistory((prev) => {
       const updated = [next, ...prev].slice(0, 50);

@@ -1,29 +1,43 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Coins } from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import BuyCreditsDialog from "@/components/BuyCreditsDialog";
 
 const TITLES: Record<string, string> = {
-  "/gifts":   "Find a Gift",
+  "/gifts":   "Discover",
   "/compare": "Compare",
   "/history": "History",
-  "/profile": "Profile",
-  "/more":    "More",
+  "/profile": "Account",
+  "/more":    "Help & Info",
 };
 
-export default function Header() {
+function MenuIcon() {
+  return <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>;
+}
+function CoinIcon() {
+  return <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/></svg>;
+}
+
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const pathname = usePathname();
   const { credits } = useCredits();
-  const title = TITLES[pathname] ?? "Muhtar";
+  const page = TITLES[pathname] ?? "Muhtar";
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 md:px-6 shrink-0">
-      <h1 className="text-base font-semibold text-foreground">{title}</h1>
+    <header className="m-header">
+      <button className="m-hamburger" onClick={onMenuClick} aria-label="Menu">
+        <MenuIcon />
+      </button>
+      <div className="m-breadcrumb">Muhtar / {page}</div>
+      <div className="m-spacer" />
       <BuyCreditsDialog>
-        <button className="flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-sm font-medium text-foreground transition-colors hover:bg-muted">
-          <Coins className="size-4 text-amber-400" />
+        <button className="m-credits-badge">
+          <span className="coin"><CoinIcon /></span>
           {credits}
         </button>
       </BuyCreditsDialog>

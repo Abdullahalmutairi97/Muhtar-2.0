@@ -2,79 +2,92 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gift, GitCompare, Clock, User, MoreHorizontal, Sun, Moon } from "lucide-react";
-import { useTheme } from "next-themes";
-import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/gifts",   label: "Gifts",   icon: Gift },
-  { href: "/compare", label: "Compare", icon: GitCompare },
-  { href: "/history", label: "History", icon: Clock },
-  { href: "/profile", label: "Profile", icon: User },
-  { href: "/more",    label: "More",    icon: MoreHorizontal },
+  { href: "/gifts",   label: "Gifts",   icon: GiftIcon },
+  { href: "/compare", label: "Compare", icon: CompareIcon },
+  { href: "/history", label: "History", icon: ClockIcon },
+  { href: "/profile", label: "Profile", icon: UserIcon },
+  { href: "/more",    label: "More",    icon: DotsIcon },
 ];
 
-export default function Sidebar() {
+function GiftIcon() {
+  return <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>;
+}
+function CompareIcon() {
+  return <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>;
+}
+function ClockIcon() {
+  return <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+}
+function UserIcon() {
+  return <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+}
+function DotsIcon() {
+  return <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>;
+}
+function LogoMark({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="9" width="11" height="9" rx="1"/>
+      <line x1="8.5" y1="9" x2="8.5" y2="18"/>
+      <path d="M8.5 9c-1.5-2-0.5-4 1-4s2 2 0 4"/>
+      <path d="M8.5 9c1.5-2 0.5-4-1-4s-2 2 0 4"/>
+      <circle cx="17" cy="15" r="3.5"/>
+      <line x1="19.5" y1="17.5" x2="22" y2="20"/>
+    </svg>
+  );
+}
+
+interface SidebarProps {
+  mobileOpen: boolean;
+  onMobileClose: () => void;
+}
+
+export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
 
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-border bg-card h-screen sticky top-0">
-        {/* Brand */}
-        <div className="flex items-center justify-between px-5 py-5 border-b border-border">
-          <span className="text-xl font-bold tracking-tight text-foreground">Muhtar</span>
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-          >
-            {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-          </button>
+      <aside className="m-sidebar">
+        <div className="m-logo">
+          <div className="m-logo-mark"><LogoMark size={22} /></div>
+          <div className="m-logo-wordmark">Muhtar</div>
         </div>
-
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5">
-          {NAV.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <Icon className="size-4 shrink-0" />
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
-      </aside>
-
-      {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 flex border-t border-border bg-card">
-        {NAV.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
-                active ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <Icon className="size-5" />
+        <nav className="m-nav">
+          {NAV.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} className={`m-nav-item ${pathname === href ? "active" : ""}`}>
+              <Icon />
               {label}
             </Link>
-          );
-        })}
-      </nav>
+          ))}
+        </nav>
+        <div className="m-sidebar-footer">
+          <div>AI GIFT FINDER</div>
+          <div>v2.0 · PMU 2026</div>
+        </div>
+      </aside>
+
+      {/* Mobile sheet */}
+      {mobileOpen && (
+        <div className="m-mobile-sheet" onClick={onMobileClose}>
+          <div className="m-mobile-sheet-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="m-logo">
+              <div className="m-logo-mark"><LogoMark size={22} /></div>
+              <div className="m-logo-wordmark">Muhtar</div>
+            </div>
+            <nav className="m-nav">
+              {NAV.map(({ href, label, icon: Icon }) => (
+                <Link key={href} href={href} className={`m-nav-item ${pathname === href ? "active" : ""}`} onClick={onMobileClose}>
+                  <Icon />
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
     </>
   );
 }

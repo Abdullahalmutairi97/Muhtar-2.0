@@ -1,265 +1,278 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import GiftCard from "@/components/GiftCard";
+import { useRef, useState } from "react";
 import { searchGifts } from "@/lib/api";
 import { deduplicateProducts } from "@/utils/deduplicateProducts";
 import type { GiftResult } from "@/types";
-import { X, Loader2, GitCompare } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useCredits } from "@/hooks/useCredits";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
-import GiftCardSkeleton from "@/components/GiftCardSkeleton";
-import { toast } from "sonner";
 
-const BUDGET_STEPS = [
-  100, 200, 300, 400, 500, 600, 700, 800, 900,
-  1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 7500, 10000,
+const SUGGESTED = ["tech", "cooking", "sports", "reading", "fashion", "travel", "gaming", "art"];
+
+function sliderToBudget(v: number) {
+  if (v <= 0.5) return Math.round((100 + (1000 - 100) * (v / 0.5)) / 50) * 50;
+  return Math.round((1000 + (10000 - 1000) * ((v - 0.5) / 0.5)) / 100) * 100;
+}
+function budgetToSlider(b: number) {
+  if (b <= 1000) return ((b - 100) / 900) * 0.5;
+  return 0.5 + ((b - 1000) / 9000) * 0.5;
+}
+
+const LOAD_LABELS = [
+  "Understanding the recipient",
+  "Generating 4 search queries",
+  "Searching Amazon.sa",
+  "Selecting the best four",
 ];
 
-const GENDERS = ["Male", "Female", "Any"] as const;
-type Gender = (typeof GENDERS)[number];
+function SparkleIcon({ size = 16 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M19 14l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>;
+}
+function BoltIcon() {
+  return <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+}
+function ArrowOutIcon() {
+  return <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><polyline points="7 7 17 7 17 17"/></svg>;
+}
 
-const INTEREST_SUGGESTIONS = [
-  "Tech", "Gaming", "Books", "Fitness", "Travel",
-  "Cooking", "Fashion", "Music", "Art", "Sports",
-];
+function AILoading({ step }: { step: number }) {
+  return (
+    <div className="m-ai-loading">
+      <div className="m-orb">
+        <div className="m-orb-inner"><SparkleIcon size={26} /></div>
+      </div>
+      <div className="m-think-steps">
+        {LOAD_LABELS.map((label, i) => (
+          <div key={i} className={`m-think-step ${step === i ? "active" : step > i ? "done" : ""}`}>
+            <span className="m-think-dot" />
+            <span>{label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GiftCard({ gift, delay }: { gift: GiftResult; delay: number }) {
+  const ref = useRef<HTMLElement>(null);
+  const onMove = (e: React.MouseEvent) => {
+    if (!ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    ref.current.style.setProperty("--mx", `${((e.clientX - r.left) / r.width) * 100}%`);
+    ref.current.style.setProperty("--my", `${((e.clientY - r.top) / r.height) * 100}%`);
+  };
+  return (
+    <article className="m-gift-card" ref={ref} onMouseMove={onMove} style={{ animationDelay: `${delay}ms` }}>
+      {gift.imageUrl && (
+        <div className="m-gift-img">
+          <img src={gift.imageUrl} alt={gift.name} onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = "none"; }} />
+        </div>
+      )}
+      {gift.badge && (
+        <span style={{
+          position: "absolute", top: 12, right: 12,
+          padding: "3px 10px", borderRadius: 999,
+          fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+          fontWeight: 700,
+          background: gift.badge === "Best Value" ? "color-mix(in oklch, oklch(0.7 0.15 150) 20%, transparent)" : "color-mix(in oklch, var(--accent) 20%, transparent)",
+          color: gift.badge === "Best Value" ? "oklch(0.72 0.13 150)" : "oklch(0.78 0.12 70)",
+          border: "1px solid currentColor",
+        }}>{gift.badge}</span>
+      )}
+      <div className="m-gift-brand">{gift.store}</div>
+      <div className="m-gift-name">{gift.name}</div>
+      {gift.inStock === false && (
+        <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--fg-4)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Out of stock</div>
+      )}
+      <div className="m-gift-footer">
+        <div className="m-price-pill">
+          <span className="cur">SAR</span>
+          {gift.price.toLocaleString()}
+        </div>
+        <a className="m-take-me" href={gift.url} target="_blank" rel="noreferrer">
+          Take me there <ArrowOutIcon />
+        </a>
+      </div>
+    </article>
+  );
+}
 
 export default function GiftsPage() {
-  const router = useRouter();
-  const [gender, setGender] = useState<Gender>("Any");
-  const [age, setAge] = useState("");
-  const [interests, setInterests] = useState<string[]>([]);
-  const [interestInput, setInterestInput] = useState("");
-  const [budgetIdx, setBudgetIdx] = useState(9);
-  const [results, setResults] = useState<GiftResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [error, setError] = useState("");
-  const [compareList, setCompareList] = useState<GiftResult[]>([]);
+  const [gender, setGender] = useState("");
+  const [age, setAge] = useState<number | "">(25);
+  const [interests, setInterests] = useState("");
+  const [budget, setBudget] = useState(1000);
+  const [loadStep, setLoadStep] = useState(-1);
+  const [results, setResults] = useState<GiftResult[] | null>(null);
+  const [err, setErr] = useState("");
 
   const { credits, deduct } = useCredits();
   const { addEntry } = useSearchHistory();
-  const budget = BUDGET_STEPS[budgetIdx];
+  const sliderVal = budgetToSlider(budget);
 
-  function addInterest(tag: string) {
-    const t = tag.trim();
-    if (t && !interests.includes(t)) setInterests((p) => [...p, t]);
-    setInterestInput("");
-  }
+  const toggleSuggest = (t: string) => {
+    const tokens = interests.split(",").map((s) => s.trim()).filter(Boolean);
+    const has = tokens.includes(t);
+    setInterests(has ? tokens.filter((x) => x !== t).join(", ") : [...tokens, t].join(", "));
+  };
 
-  function handleInterestKey(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addInterest(interestInput);
-    }
-    if (e.key === "Backspace" && !interestInput && interests.length > 0) {
-      setInterests((p) => p.slice(0, -1));
-    }
-  }
+  const runSearch = async () => {
+    if (credits < 5) { setErr("Not enough credits"); return; }
+    if (!gender) { setErr("Select a gender"); return; }
+    if (!interests.trim()) { setErr("Add at least one interest"); return; }
+    setErr("");
+    setResults(null);
+    setLoadStep(0);
 
-  function toggleCompare(gift: GiftResult) {
-    setCompareList((prev) => {
-      if (prev.find((g) => g.id === gift.id)) return prev.filter((g) => g.id !== gift.id);
-      if (prev.length >= 3) return prev;
-      return [...prev, gift];
-    });
-  }
+    let step = 0;
+    const interval = setInterval(() => {
+      if (step < 3) { step++; setLoadStep(step); }
+    }, 900);
 
-  function goCompare() {
-    localStorage.setItem("muhtar_compare", JSON.stringify(compareList));
-    router.push("/compare");
-  }
-
-  async function handleSubmit(e: React.SyntheticEvent) {
-    e.preventDefault();
-    if (!age || Number(age) < 1) { setError("Enter a valid age"); return; }
-    if (credits < 5) { setError("Not enough credits. Buy more to continue."); return; }
-    setError("");
-    setLoading(true);
-    setSearched(false);
-    setCompareList([]);
-    deduct(5);
-    toast.info("Searching for gifts…", { duration: 1000 });
     try {
-      const raw = await searchGifts({ gender, age: Number(age), interests, budget });
+      deduct(5);
+      const raw = await searchGifts({
+        gender,
+        age: typeof age === "number" ? age : 25,
+        interests: interests.split(",").map((s) => s.trim()).filter(Boolean),
+        budget,
+      });
+      clearInterval(interval);
       const deduped = deduplicateProducts(raw);
       setResults(deduped);
-      addEntry({ query: { gender, age: Number(age), interests, budget }, results: deduped });
-      toast.success(`Found ${deduped.length} gifts · 5 credits used`);
+      setLoadStep(-1);
+      addEntry({
+        type: "gift" as const,
+        query: `${gender === "m" ? "Male" : "Female"}, ${age}, ${interests}, SAR ${budget.toLocaleString()}`,
+        credits: 5,
+      });
     } catch {
-      setError("Search failed. Please try again.");
-      toast.error("Search failed. Please try again.");
-    } finally {
-      setLoading(false);
-      setSearched(true);
+      clearInterval(interval);
+      setErr("Search failed. Please try again.");
+      setLoadStep(-1);
     }
-  }
+  };
+
+  const reset = () => { setResults(null); setLoadStep(-1); };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 pb-24">
-      {/* Search form */}
-      <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-5 space-y-5">
-        {/* Gender */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-card-foreground">Gender</label>
-          <div className="flex gap-2">
-            {GENDERS.map((g) => (
-              <button
-                key={g}
-                type="button"
-                onClick={() => setGender(g)}
-                className={cn(
-                  "rounded-lg border px-4 py-1.5 text-sm font-medium transition-colors",
-                  gender === g
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-                )}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-        </div>
+    <>
+      <div className="m-page-head">
+        <h1 className="m-page-title">Discover Gifts</h1>
+        <p className="m-page-sub">Tell us about the person. Muhtar searches real Saudi stores and returns four ideas tailored to them.</p>
+      </div>
 
-        {/* Age */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-card-foreground">Age</label>
-          <Input
-            type="number"
-            min={1}
-            max={120}
-            placeholder="e.g. 25"
-            value={age}
-            onChange={(e) => { setError(""); setAge(e.target.value); }}
-            className="w-32"
-          />
-        </div>
+      {!results && loadStep < 0 && (
+        <div className="m-card hi">
+          <div className="m-form-grid">
+            <div className="m-field">
+              <div className="m-label">Gender</div>
+              <select className="m-select" value={gender} onChange={(e) => setGender(e.target.value)}>
+                <option value="">Select gender</option>
+                <option value="m">Male</option>
+                <option value="f">Female</option>
+              </select>
+            </div>
 
-        {/* Interests */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-card-foreground">
-            Interests <span className="text-muted-foreground font-normal">(optional)</span>
-          </label>
-          <div className="flex flex-wrap gap-1.5 rounded-lg border border-input bg-input/30 px-2.5 py-2 min-h-9 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 transition-colors">
-            {interests.map((tag) => (
-              <span key={tag} className="flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
-                {tag}
-                <button type="button" onClick={() => setInterests((p) => p.filter((t) => t !== tag))}>
-                  <X className="size-3 text-muted-foreground hover:text-foreground" />
-                </button>
-              </span>
-            ))}
-            <input
-              type="text"
-              value={interestInput}
-              onChange={(e) => setInterestInput(e.target.value)}
-              onKeyDown={handleInterestKey}
-              onBlur={() => interestInput && addInterest(interestInput)}
-              placeholder={interests.length === 0 ? "Type and press Enter…" : ""}
-              className="flex-1 min-w-24 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            />
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {INTEREST_SUGGESTIONS.filter((s) => !interests.includes(s)).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => addInterest(s)}
-                className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
-              >
-                + {s}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Budget */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-card-foreground">Budget</label>
-            <span className="text-sm font-bold text-foreground">
-              {budget.toLocaleString("en-SA")} <span className="text-xs font-normal text-muted-foreground">SAR</span>
-            </span>
-          </div>
-          <Slider
-            min={0}
-            max={BUDGET_STEPS.length - 1}
-            value={[budgetIdx]}
-            onValueChange={(v) => setBudgetIdx(Array.isArray(v) ? v[0] : v)}
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>100 SAR</span>
-            <span>10,000 SAR</span>
-          </div>
-        </div>
-
-        {error && <p className="text-xs text-destructive">{error}</p>}
-
-        <Button type="submit" className="w-full" size="lg" disabled={loading || credits < 5}>
-          {loading
-            ? <><Loader2 className="size-4 animate-spin" /> Finding gifts…</>
-            : credits < 5
-            ? "Not enough credits"
-            : `Find Gifts — 5 credits (${credits} remaining)`}
-        </Button>
-      </form>
-
-      {/* Skeletons while loading */}
-      {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => <GiftCardSkeleton key={i} />)}
-        </div>
-      )}
-
-      {/* Results */}
-      {searched && !loading && (
-        results.length > 0 ? (
-          <div>
-            <p className="mb-3 text-sm text-muted-foreground">
-              {results.length} suggestions · select up to 3 to compare
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {results.map((gift, i) => (
-                <div
-                  key={gift.id}
-                  className="animate-in fade-in-0 slide-in-from-bottom-4 duration-300"
-                  style={{ animationDelay: `${i * 75}ms`, animationFillMode: "both" }}
-                >
-                  <GiftCard
-                    gift={gift}
-                    onCompare={toggleCompare}
-                    compareSelected={!!compareList.find((g) => g.id === gift.id)}
-                    compareDisabled={compareList.length >= 3}
+            <div className="m-field">
+              <div className="m-label">Age</div>
+              <div className="m-age-stepper">
+                <button type="button" className="m-age-btn" onClick={() => setAge((a) => Math.max(1, (+(a || 0)) - 1))}>−</button>
+                <div className="m-age-display">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="m-age-input"
+                    value={age}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(0, 3);
+                      setAge(v === "" ? "" : Math.min(120, +v));
+                    }}
+                    onBlur={() => { if (!age || +age < 1) setAge(1); }}
                   />
+                  <span className="m-age-unit">yrs</span>
                 </div>
-              ))}
+                <button type="button" className="m-age-btn" onClick={() => setAge((a) => Math.min(120, (+(a || 0)) + 1))}>+</button>
+              </div>
+            </div>
+
+            <div className="m-field full">
+              <div className="m-label">Interests</div>
+              <input
+                className="m-input"
+                placeholder="e.g. tech, cooking, sports, reading..."
+                value={interests}
+                onChange={(e) => setInterests(e.target.value)}
+              />
+              <div className="m-pill-row m-mt8">
+                {SUGGESTED.map((s) => {
+                  const on = interests.toLowerCase().split(",").map((x) => x.trim()).includes(s);
+                  return (
+                    <button key={s} className={`m-pill ${on ? "on" : ""}`} onClick={() => toggleSuggest(s)}>
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="m-field full">
+              <div className="m-label">Budget</div>
+              <div className="m-slider-wrap">
+                <input
+                  className="m-slider"
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.005}
+                  value={sliderVal}
+                  style={{ "--pct": `${sliderVal * 100}%` } as React.CSSProperties}
+                  onChange={(e) => setBudget(sliderToBudget(+e.target.value))}
+                />
+                <div className="m-mt12 m-row" style={{ justifyContent: "space-between", fontFamily: "var(--mono)", fontSize: 11, color: "var(--fg-4)" }}>
+                  <span>SAR 100</span>
+                  <span className="m-budget-readout">Up to SAR {budget.toLocaleString()}</span>
+                  <span>SAR 10,000</span>
+                </div>
+              </div>
             </div>
           </div>
-        ) : (
-          <p className="text-center text-sm text-muted-foreground py-10">
-            No gifts found. Try adjusting your filters.
-          </p>
-        )
-      )}
 
-      {/* Floating compare bar */}
-      {compareList.length >= 2 && (
-        <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-40">
-          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card/90 backdrop-blur-md px-4 py-3 shadow-2xl shadow-black/40">
-            <span className="text-sm text-muted-foreground">
-              {compareList.length} selected
-            </span>
-            <Button size="sm" onClick={goCompare} className="gap-1.5">
-              <GitCompare className="size-4" /> Compare Now
-            </Button>
+          {err && <p style={{ color: "var(--danger)", fontSize: 13, marginTop: 12 }}>{err}</p>}
+
+          <div className="m-row m-mt24" style={{ justifyContent: "space-between" }}>
+            <div className="m-row m-fg4 m-small"><BoltIcon /><span>Costs 5 credits per search</span></div>
+            <button className="m-btn m-btn-primary m-btn-lg" onClick={runSearch}>
+              <SparkleIcon size={16} /> Find gifts
+            </button>
           </div>
         </div>
       )}
-    </div>
+
+      {loadStep >= 0 && <AILoading step={loadStep} />}
+
+      {results && (
+        <>
+          <div className="m-results-head">
+            <div>
+              <h2 className="m-results-title">Four gifts for them</h2>
+              <div className="m-results-meta m-mt8">
+                4 results · {gender === "m" ? "Male" : "Female"} · age {age} · up to SAR {budget.toLocaleString()}
+              </div>
+            </div>
+            <div className="m-row">
+              <button className="m-btn m-btn-ghost m-btn-sm" onClick={reset}>New search</button>
+              <button className="m-btn m-btn-outline m-btn-sm" onClick={runSearch}>Regenerate</button>
+            </div>
+          </div>
+
+          <div className="m-gift-grid">
+            {results.map((g, idx) => (
+              <GiftCard key={g.id} gift={g} delay={idx * 110} />
+            ))}
+          </div>
+        </>
+      )}
+    </>
   );
 }
