@@ -4,13 +4,16 @@ import FirecrawlApp from "@mendable/firecrawl-js";
 import { deduplicateProducts } from "@/utils/deduplicateProducts";
 import type { GiftResult } from "@/types";
 
-const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const firecrawl = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY! });
-
-const model = genai.getGenerativeModel({ model: "gemini-2.0-flash" });
-
 export async function POST(req: NextRequest) {
   try {
+    if (!process.env.GEMINI_API_KEY || !process.env.FIRECRAWL_API_KEY) {
+      return NextResponse.json(getFallback());
+    }
+
+    const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const firecrawl = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
+    const model = genai.getGenerativeModel({ model: "gemini-2.0-flash" });
+
     const { gender, age, interests, budget } = await req.json();
 
     // Step 1: Gemini generates 4 Amazon.sa search queries

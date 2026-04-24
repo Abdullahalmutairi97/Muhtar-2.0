@@ -2,14 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import FirecrawlApp from "@mendable/firecrawl-js";
 
-const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const firecrawl = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY! });
-const model = genai.getGenerativeModel({ model: "gemini-2.0-flash" });
-
 export async function POST(req: NextRequest) {
   try {
     const { q } = await req.json();
     if (!q) return NextResponse.json({ error: "No query" }, { status: 400 });
+
+    if (!process.env.GEMINI_API_KEY || !process.env.FIRECRAWL_API_KEY) {
+      return NextResponse.json(getFallback(q));
+    }
+
+    const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const firecrawl = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
+    const model = genai.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     // Step 1: Generate 3 search queries (exact product + 2 competitors)
     const queryPrompt = `You are a product comparison assistant for Saudi Arabia.

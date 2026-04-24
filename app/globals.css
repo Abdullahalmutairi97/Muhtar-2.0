@@ -2,44 +2,7 @@
 @import "tw-animate-css";
 
 /* ============ MUHTAR DESIGN SYSTEM ============ */
-/* Dark theme (default — applied when .dark class is on <html>) */
-.dark {
-  --accent-h: 30;
-  --accent: #C2A782;
-  --accent-light: #D9C3A6;
-  --accent-dark: #8C7253;
-  --accent-soft: #D9C3A6;
-  --accent-dim: #8C7253;
-  --accent-ghost: color-mix(in srgb, #C2A782 14%, transparent);
-  --accent-fog: color-mix(in srgb, #C2A782 8%, transparent);
-
-  --bg: #1F1F1F;
-  --bg-elev: #292929;
-  --bg-card: #292929;
-  --bg-card-2: #2E2E2E;
-  --bg-input: #333333;
-  --on-card: #E6E6E1;
-  --on-card-2: #C9C0B5;
-  --on-card-3: #8C8C89;
-
-  --m-border: #383838;
-  --border-strong: #4D4035;
-  --border-accent: color-mix(in srgb, #C2A782 35%, transparent);
-
-  --fg: #E6E6E1;
-  --fg-2: #C9C0B5;
-  --fg-3: #8C8C89;
-  --fg-4: #666663;
-
-  --danger: #EF4444;
-  --success: #72C292;
-
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
-  --shadow: 0 8px 24px -12px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.2);
-  --shadow-lg: 0 24px 48px -16px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.25);
-}
-
-/* Light theme */
+/* Light theme (base — .dark overrides below) */
 :root {
   --accent-h: 30;
   --accent: #C2A782;
@@ -74,6 +37,43 @@
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
   --shadow: 0 8px 24px -12px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.08);
   --shadow-lg: 0 24px 48px -16px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Dark theme — must come after :root so it wins in cascade */
+.dark {
+  --accent-h: 30;
+  --accent: #C2A782;
+  --accent-light: #D9C3A6;
+  --accent-dark: #8C7253;
+  --accent-soft: #D9C3A6;
+  --accent-dim: #8C7253;
+  --accent-ghost: color-mix(in srgb, #C2A782 14%, transparent);
+  --accent-fog: color-mix(in srgb, #C2A782 8%, transparent);
+
+  --bg: #1F1F1F;
+  --bg-elev: #292929;
+  --bg-card: #292929;
+  --bg-card-2: #2E2E2E;
+  --bg-input: #333333;
+  --on-card: #E6E6E1;
+  --on-card-2: #C9C0B5;
+  --on-card-3: #8C8C89;
+
+  --m-border: #383838;
+  --border-strong: #4D4035;
+  --border-accent: color-mix(in srgb, #C2A782 35%, transparent);
+
+  --fg: #E6E6E1;
+  --fg-2: #C9C0B5;
+  --fg-3: #8C8C89;
+  --fg-4: #666663;
+
+  --danger: #EF4444;
+  --success: #72C292;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
+  --shadow: 0 8px 24px -12px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.2);
+  --shadow-lg: 0 24px 48px -16px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.25);
 }
 
 /* Fonts */
