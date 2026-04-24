@@ -1055,3 +1055,13 @@ h1, h2, h3, h4 { margin: 0; font-weight: 500; letter-spacing: -0.02em; }
 .m-mt24 { margin-top: 24px; }
 .m-mb24 { margin-bottom: 24px; }
 .m-spacer { flex: 1; }
+
+/* ============ DARK MODE CARD OVERRIDES ============ */
+/* Some card-internal selectors use hardcoded light-mode colors.
+   These overrides restore visibility in dark mode. */
+.dark .m-gift-card .m-price-pill { color: var(--accent); }
+.dark .m-card .m-pill { background: var(--bg-input); border-color: var(--m-border); }
+.dark .m-card .m-pill.on { color: var(--accent); }
+.dark .m-card .m-budget-readout { color: var(--accent); }
+.dark .m-card .m-btn-ghost { background: var(--bg-card-2); border-color: var(--m-border); }
+.dark .m-card .m-btn-outline:hover { color: var(--accent); }
