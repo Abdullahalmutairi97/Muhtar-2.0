@@ -2,61 +2,72 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(req: NextRequest) {
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json({ error: "GEMINI_API_KEY not configured" }, { status: 500 });
+  }
+
   try {
     const { q } = await req.json();
     if (!q) return NextResponse.json({ error: "No query" }, { status: 400 });
 
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json({ error: "GEMINI_API_KEY not set" }, { status: 500 });
-    }
-
     const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genai.getGenerativeModel(
-      { model: "gemini-2.0-flash" },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      { apiVersion: "v1beta" } as any
-    );
+    const model = genai.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const prompt = `Search Amazon.sa right now and compare "${q}" against two strong alternatives.
-Find REAL current products and prices on amazon.sa using Google Search.
+    const prompt = `You are a product comparison assistant for Saudi Arabia.
+Compare "${q}" against two strong alternatives available on Amazon.sa.
 
-Return ONLY a valid JSON object, no markdown, no explanation:
+IMPORTANT: Respond with ONLY a raw JSON object. No markdown, no code fences, no explanation.
 {
   "summary": "2-sentence comparison summary",
   "products": [
     {
       "name": "product name without brand",
       "brand": "brand name",
-      "price": number in SAR,
+      "price": <realistic SAR price>,
       "imageUrl": "",
-      "url": "real amazon.sa product or search URL",
-      "badge": "value" or "premium" or null,
+      "url": "https://www.amazon.sa/s?k=product+name+url+encoded",
+      "badge": "value",
+      "pros": ["pro 1", "pro 2", "pro 3"],
+      "cons": ["con 1", "con 2"],
+      "inStock": true
+    },
+    {
+      "name": "competitor 1 name",
+      "brand": "brand name",
+      "price": <realistic SAR price>,
+      "imageUrl": "",
+      "url": "https://www.amazon.sa/s?k=competitor+name+url+encoded",
+      "badge": null,
+      "pros": ["pro 1", "pro 2", "pro 3"],
+      "cons": ["con 1", "con 2"],
+      "inStock": true
+    },
+    {
+      "name": "competitor 2 name",
+      "brand": "brand name",
+      "price": <realistic SAR price>,
+      "imageUrl": "",
+      "url": "https://www.amazon.sa/s?k=competitor+name+url+encoded",
+      "badge": "premium",
       "pros": ["pro 1", "pro 2", "pro 3"],
       "cons": ["con 1", "con 2"],
       "inStock": true
     }
   ]
-}
-Rules:
-- First product must be "${q}"
-- Two strong competitors from different brands
-- Assign "value" badge to best price-to-quality, "premium" to highest-end (max 1 each)
-- Exactly 3 pros and 2 cons per product, under 10 words each
-- Real SAR prices from Amazon.sa`;
+}`;
 
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      tools: [{ googleSearch: {} }] as any,
-    });
-
-    const text = result.response.text().trim();
+    const result = await model.generateContent(prompt);
+    const text = result.response.text().trim().replace(/^```json\s*/i, "").replace(/```\s*$/i, "");
     const match = text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error("No JSON in response");
+    if (!match) throw new Error("No JSON object in Gemini response");
 
     return NextResponse.json(JSON.parse(match[0]));
   } catch (err) {
-    console.error("compare-products error:", err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    const msg = String(err);
+    console.error("compare-products error:", msg);
+    const friendly = msg.includes("quota") || msg.includes("429")
+      ? "API quota reached — try again later or enable billing at console.cloud.google.com"
+      : "Compare failed — " + msg.slice(0, 120);
+    return NextResponse.json({ error: friendly }, { status: 500 });
   }
 }
