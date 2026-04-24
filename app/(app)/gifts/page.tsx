@@ -146,9 +146,9 @@ export default function GiftsPage() {
         query: `${gender === "m" ? "Male" : "Female"}, ${age}, ${interests}, SAR ${budget.toLocaleString()}`,
         credits: 5,
       });
-    } catch {
+    } catch (e) {
       clearInterval(interval);
-      setErr("Search failed. Please try again.");
+      setErr(e instanceof Error ? e.message : "Search failed. Please try again.");
       setLoadStep(-1);
     }
   };
