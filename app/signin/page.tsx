@@ -211,7 +211,7 @@ export default function SignInPage() {
           {step === "name" && (
             <>
               <h2 className="m-signin-title">What should we call you?</h2>
-              <p className="m-signin-desc">Just a first name. We&apos;ll add 100 free credits to your new account.</p>
+              <p className="m-signin-desc">We&apos;ll add 100 free credits to your new account.</p>
               <div className="m-field full">
                 <div className="m-label">Your name</div>
                 <input
