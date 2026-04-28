@@ -83,11 +83,7 @@ IMPORTANT: Respond with ONLY a raw JSON array. No markdown, no code fences, no e
   } catch (err) {
     const msg = String(err);
     console.error("gift-search error:", msg);
-    const friendly = msg.includes("quota") || msg.includes("429")
-      ? "API quota reached — try again later or enable billing at console.cloud.google.com"
-      : msg.includes("API_KEY") || msg.includes("key")
-      ? "Invalid Gemini API key"
-      : "Search failed — " + msg.slice(0, 120);
+    const friendly = "Search failed — " + msg.slice(0, 200);
     return NextResponse.json({ error: friendly }, { status: 500 });
   }
 }
