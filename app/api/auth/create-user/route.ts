@@ -24,10 +24,12 @@ export async function POST(req: NextRequest) {
         .select("id")
         .eq("phone", normalized)
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        return NextResponse.json({ error: "supabase-select: " + JSON.stringify(error), supabaseUrl }, { status: 500 });
+      }
       existing = data;
     } catch (e) {
-      return NextResponse.json({ error: "supabase-select: " + String(e), supabaseUrl }, { status: 500 });
+      return NextResponse.json({ error: "supabase-select-catch: " + String(e), supabaseUrl }, { status: 500 });
     }
 
     let userId: string;
@@ -46,10 +48,12 @@ export async function POST(req: NextRequest) {
           .insert({ phone: normalized, name: name.trim() })
           .select("id")
           .single();
-        if (error) throw error;
+        if (error) {
+          return NextResponse.json({ error: "supabase-insert: " + JSON.stringify(error), supabaseUrl }, { status: 500 });
+        }
         newUser = data;
       } catch (e) {
-        return NextResponse.json({ error: "supabase-insert: " + String(e), supabaseUrl }, { status: 500 });
+        return NextResponse.json({ error: "supabase-insert-catch: " + String(e), supabaseUrl }, { status: 500 });
       }
 
       if (!newUser) {
