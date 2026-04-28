@@ -131,7 +131,7 @@ export default function SignInPage() {
           {step === "phone" && (
             <>
               <h2 className="m-signin-title">Sign in</h2>
-              <p className="m-signin-desc">Enter your phone number to continue.</p>
+              <p className="m-signin-desc">We&apos;ll send you a one-time code. No passwords needed.</p>
               <div className="m-field full">
                 <div className="m-label">Mobile Number</div>
                 <div className="m-phone-input">
@@ -169,7 +169,8 @@ export default function SignInPage() {
             <>
               <h2 className="m-signin-title">Enter the code</h2>
               <p className="m-signin-desc">
-                Enter <strong style={{ fontFamily: "var(--mono)", color: "var(--fg-2)" }}>1234</strong> to continue.
+                We sent a code to{" "}
+                <span style={{ fontFamily: "var(--mono)", color: "var(--fg-2)" }}>+966 {phone}</span>.
               </p>
               <div className="m-otp-boxes">
                 {otp.map((v, i) => (
@@ -188,6 +189,11 @@ export default function SignInPage() {
                     }}
                   />
                 ))}
+              </div>
+              <div className="m-row" style={{ justifyContent: "center", marginBottom: 20 }}>
+                <span className="m-hint-chip" style={{ fontSize: 11 }}>
+                  For this demo — enter <strong style={{ fontFamily: "var(--mono)", letterSpacing: "0.1em" }}>1234</strong> to continue
+                </span>
               </div>
               {err && <div style={{ color: "var(--danger)", fontSize: 12, marginBottom: 12, textAlign: "center" }}>{err}</div>}
               <button
