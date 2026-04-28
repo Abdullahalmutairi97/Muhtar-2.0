@@ -13,7 +13,7 @@ export async function searchGifts(params: {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({})) as { error?: string };
-    throw new Error(body.error?.includes("quota") ? "API quota reached — try again tomorrow or enable billing." : "Gift search failed");
+    throw new Error(body.error ?? "Gift search failed");
   }
   return res.json();
 }
