@@ -13,12 +13,13 @@ export async function POST(req: NextRequest) {
     const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genai.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const prompt = `You are a product comparison assistant for Saudi Arabia.
-Compare "${q}" against two strong alternatives available on Amazon.sa.
+    const prompt = `You are a product comparison expert for Saudi Arabia.
+Compare "${q}" against two strong alternatives available in Saudi stores (Amazon.sa, Noon.com, Jarir, Extra).
+Use realistic SAR prices. Pick the best store URL per product.
 
 IMPORTANT: Respond with ONLY a raw JSON object. No markdown, no code fences, no explanation.
 {
-  "summary": "2-sentence comparison summary",
+  "summary": "2-sentence comparison summary explaining the key trade-offs",
   "products": [
     {
       "name": "product name without brand",
@@ -36,7 +37,7 @@ IMPORTANT: Respond with ONLY a raw JSON object. No markdown, no code fences, no 
       "brand": "brand name",
       "price": <realistic SAR price>,
       "imageUrl": "",
-      "url": "https://www.amazon.sa/s?k=competitor+name+url+encoded",
+      "url": "https://www.noon.com/saudi-en/search/?q=competitor+name+url+encoded",
       "badge": null,
       "pros": ["pro 1", "pro 2", "pro 3"],
       "cons": ["con 1", "con 2"],

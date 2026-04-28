@@ -1,9 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-
-const STORAGE_KEY = "muhtar_credits";
-const INITIAL = 100;
+import { createContext, useContext, useState } from "react";
 
 interface CreditsCtx {
   credits: number;
@@ -13,29 +10,32 @@ interface CreditsCtx {
 
 const CreditsContext = createContext<CreditsCtx | null>(null);
 
-export function CreditsProvider({ children }: { children: React.ReactNode }) {
-  const [credits, setCredits] = useState<number>(INITIAL);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored !== null) setCredits(Number(stored));
-  }, []);
+export function CreditsProvider({
+  initialCredits,
+  children,
+}: {
+  initialCredits: number;
+  children: React.ReactNode;
+}) {
+  const [credits, setCredits] = useState(initialCredits);
 
   function deduct(amount: number): boolean {
     if (credits < amount) return false;
-    setCredits((prev) => {
-      const next = prev - amount;
-      localStorage.setItem(STORAGE_KEY, String(next));
-      return next;
+    setCredits((prev) => prev - amount);
+    fetch("/api/credits/deduct", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount }),
     });
     return true;
   }
 
   function add(amount: number) {
-    setCredits((prev) => {
-      const next = prev + amount;
-      localStorage.setItem(STORAGE_KEY, String(next));
-      return next;
+    setCredits((prev) => prev + amount);
+    fetch("/api/credits/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount }),
     });
   }
 

@@ -1,24 +1,23 @@
-"use client";
+import { cookies } from "next/headers";
+import { parseSessionToken, SESSION_COOKIE } from "@/lib/session";
+import { getSupabase } from "@/lib/supabase/server";
+import AppShell from "@/components/AppShell";
 
-import { useState } from "react";
-import Sidebar from "@/components/Sidebar";
-import Header from "@/components/Header";
-import { CreditsProvider } from "@/lib/credits-context";
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  const userId = token ? await parseSessionToken(token) : null;
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  let user = null;
+  if (userId) {
+    const supabase = getSupabase();
+    const { data } = await supabase
+      .from("users")
+      .select("id, name, phone, credits")
+      .eq("id", userId)
+      .single();
+    user = data;
+  }
 
-  return (
-    <CreditsProvider>
-      <div className="m-app">
-        <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
-        <div className="m-main">
-          <Header onMenuClick={() => setMobileOpen(true)} />
-          <div className="m-content">
-            {children}
-          </div>
-        </div>
-      </div>
-    </CreditsProvider>
-  );
+  return <AppShell user={user}>{children}</AppShell>;
 }

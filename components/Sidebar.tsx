@@ -49,7 +49,6 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
 
   return (
     <>
-      {/* Desktop sidebar */}
       <aside className="m-sidebar">
         <div className="m-logo">
           <div className="m-logo-mark"><LogoMark size={22} /></div>
@@ -69,7 +68,6 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         </div>
       </aside>
 
-      {/* Mobile sheet */}
       {mobileOpen && (
         <div className="m-mobile-sheet" onClick={onMobileClose}>
           <div className="m-mobile-sheet-panel" onClick={(e) => e.stopPropagation()}>

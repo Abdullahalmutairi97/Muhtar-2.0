@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCredits } from "@/hooks/useCredits";
+import { useUser } from "@/lib/user-context";
+import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import BuyCreditsDialog from "@/components/BuyCreditsDialog";
 
@@ -18,15 +19,20 @@ function LogoutIcon() {
   return <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
 }
 
+function formatPhone(phone: string) {
+  const d = phone.replace(/\D/g, "");
+  if (d.length === 9) return `+966 ${d.slice(0, 2)} ${d.slice(2, 5)} ${d.slice(5)}`;
+  if (d.length === 10) return `+966 ${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
+  return `+966 ${d}`;
+}
+
 export default function ProfilePage() {
-  const router = useRouter();
+  const user = useUser();
   const { credits } = useCredits();
+  const { signOut } = useAuth();
   const { theme, setTheme } = useTheme();
 
-  function handleSignOut() {
-    localStorage.clear();
-    router.push("/signin");
-  }
+  const initials = user?.name?.charAt(0)?.toUpperCase() ?? "?";
 
   return (
     <>
@@ -36,10 +42,10 @@ export default function ProfilePage() {
       </div>
 
       <div className="m-profile-hero">
-        <div className="m-avatar">Y</div>
+        <div className="m-avatar">{initials}</div>
         <div>
-          <div className="m-profile-name">Demo User</div>
-          <div className="m-profile-phone">+966 5XX XXX XXX</div>
+          <div className="m-profile-name">{user?.name ?? "—"}</div>
+          <div className="m-profile-phone">{user?.phone ? formatPhone(user.phone) : "—"}</div>
         </div>
         <div className="m-spacer" />
         <BuyCreditsDialog>
@@ -55,12 +61,12 @@ export default function ProfilePage() {
           <div className="m-stat-value">{credits}</div>
         </div>
         <div className="m-stat">
-          <div className="m-stat-label">Total Searches</div>
-          <div className="m-stat-value">—</div>
+          <div className="m-stat-label">Member Since</div>
+          <div className="m-stat-value" style={{ fontSize: 16 }}>2026</div>
         </div>
         <div className="m-stat">
-          <div className="m-stat-label">Credits Spent</div>
-          <div className="m-stat-value"><span className="cur">SAR </span>—</div>
+          <div className="m-stat-label">Account</div>
+          <div className="m-stat-value" style={{ fontSize: 14, color: "var(--fg-3)" }}>Active</div>
         </div>
       </div>
 
@@ -91,7 +97,7 @@ export default function ProfilePage() {
             <div className="m-settings-label">Sign out</div>
             <div className="m-settings-desc">End your session on this device.</div>
           </div>
-          <button className="m-btn m-btn-ghost m-btn-sm" onClick={handleSignOut}>
+          <button className="m-btn m-btn-ghost m-btn-sm" onClick={signOut}>
             <LogoutIcon /> Sign out
           </button>
         </div>

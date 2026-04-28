@@ -2,11 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-const KEY = "muhtar_history";
-
 export interface HistoryEntry {
   id: string;
-  type: "gift" | "comparison";
+  type: "gift" | "comparison" | "chat";
   query: string;
   credits: number;
   at: string;
@@ -16,10 +14,10 @@ export function useSearchHistory() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
-    const raw = localStorage.getItem(KEY);
-    if (raw) {
-      try { setHistory(JSON.parse(raw)); } catch { /* ignore */ }
-    }
+    fetch("/api/history")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setHistory(data); })
+      .catch(() => {});
   }, []);
 
   const addEntry = useCallback((entry: Omit<HistoryEntry, "id" | "at">) => {
@@ -28,16 +26,17 @@ export function useSearchHistory() {
       id: crypto.randomUUID(),
       at: new Date().toISOString(),
     };
-    setHistory((prev) => {
-      const updated = [next, ...prev].slice(0, 50);
-      localStorage.setItem(KEY, JSON.stringify(updated));
-      return updated;
+    setHistory((prev) => [next, ...prev].slice(0, 50));
+    fetch("/api/history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(entry),
     });
   }, []);
 
   const clearHistory = useCallback(() => {
-    localStorage.removeItem(KEY);
     setHistory([]);
+    fetch("/api/history", { method: "DELETE" });
   }, []);
 
   return { history, addEntry, clearHistory };
