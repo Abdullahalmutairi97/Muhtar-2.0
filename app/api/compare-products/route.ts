@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     if (!q) return NextResponse.json({ error: "No query" }, { status: 400 });
 
     const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genai.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genai.getGenerativeModel({ model: "gemini-2.5-flash-preview-04-17" });
 
     const prompt = `You are a product comparison expert for Saudi Arabia.
 Compare "${q}" against two strong alternatives available in Saudi stores (Amazon.sa, Noon.com, Jarir, Extra).
