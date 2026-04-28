@@ -78,11 +78,7 @@ export default function SignInPage() {
       });
       const data = await res.json();
       if (!res.ok) { setErr(data.error ?? "Invalid code"); return; }
-      if (data.isNew) {
-        setStep("name");
-      } else {
-        router.push("/gifts");
-      }
+      setStep("name");
     } catch {
       setErr("Network error — try again");
     } finally {
