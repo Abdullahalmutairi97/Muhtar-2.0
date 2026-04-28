@@ -28,20 +28,19 @@ export default function SignInPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", ""]);
   const [name, setName] = useState("");
-  const [devCode, setDevCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  const otpRefs = Array.from({ length: 6 }, () => useRef<HTMLInputElement>(null));
+  const otpRefs = Array.from({ length: 4 }, () => useRef<HTMLInputElement>(null));
 
   const updateOtp = (i: number, val: string) => {
     if (!/^\d*$/.test(val)) return;
     const next = [...otp];
     next[i] = val.slice(-1);
     setOtp(next);
-    if (val && i < 5) otpRefs[i + 1].current?.focus();
+    if (val && i < 3) otpRefs[i + 1].current?.focus();
   };
 
   const sendCode = async () => {
@@ -56,8 +55,7 @@ export default function SignInPage() {
         body: JSON.stringify({ phone: digits }),
       });
       const data = await res.json();
-      if (!res.ok) { setErr(data.error ?? "Failed to send code"); return; }
-      if (data.devCode) setDevCode(data.devCode);
+      if (!res.ok) { setErr(data.error ?? "Something went wrong"); return; }
       setStep("otp");
       setTimeout(() => otpRefs[0].current?.focus(), 50);
     } catch {
@@ -69,7 +67,7 @@ export default function SignInPage() {
 
   const verifyCode = async () => {
     const code = otp.join("");
-    if (code.length < 6) { setErr("Enter the 6-digit code"); return; }
+    if (code.length < 4) { setErr("Enter the 4-digit code"); return; }
     setErr("");
     setLoading(true);
     try {
@@ -121,7 +119,7 @@ export default function SignInPage() {
         </div>
         <div style={{ marginTop: 40 }}>
           <h1 className="m-signin-headline">The gift you <em>meant</em> to give them.</h1>
-          <p className="m-signin-sub m-mt24">Tell Muhtar about the person. We&apos;ll find thoughtful options from real Saudi stores — in under a minute.</p>
+          <p className="m-signin-sub m-mt24">Tell Muhtar about the person. We&apos;ll find thoughtful options from online stores — in under a minute.</p>
         </div>
         <div className="m-signin-testimonial">
           <div className="m-testimonial-meta">PMU Senior Capstone · Al Khobar · 2026</div>
@@ -132,9 +130,8 @@ export default function SignInPage() {
         <div>
           {step === "phone" && (
             <>
-              <div className="m-signin-step-label">Step 01 — Sign in or create account</div>
-              <h2 className="m-signin-title">Your number</h2>
-              <p className="m-signin-desc">We&apos;ll send you a one-time code. No passwords needed.</p>
+              <h2 className="m-signin-title">Sign in</h2>
+              <p className="m-signin-desc">Enter your phone number to continue.</p>
               <div className="m-field full">
                 <div className="m-label">Mobile Number</div>
                 <div className="m-phone-input">
@@ -157,7 +154,7 @@ export default function SignInPage() {
                 onClick={sendCode}
                 disabled={loading}
               >
-                {loading ? "Sending…" : <><span>Send code</span> <ArrowRightIcon /></>}
+                {loading ? "Sending…" : <><span>Continue</span> <ArrowRightIcon /></>}
               </button>
               <div className="m-mt24" style={{ fontSize: 12, color: "var(--fg-4)" }}>
                 By continuing you agree to our{" "}
@@ -170,10 +167,9 @@ export default function SignInPage() {
 
           {step === "otp" && (
             <>
-              <div className="m-signin-step-label">Step 02 — Verify</div>
               <h2 className="m-signin-title">Enter the code</h2>
               <p className="m-signin-desc">
-                Sent to <span style={{ fontFamily: "var(--mono)", color: "var(--fg-2)" }}>+966 {phone}</span>
+                Enter <strong style={{ fontFamily: "var(--mono)", color: "var(--fg-2)" }}>1234</strong> to continue.
               </p>
               <div className="m-otp-boxes">
                 {otp.map((v, i) => (
@@ -193,13 +189,6 @@ export default function SignInPage() {
                   />
                 ))}
               </div>
-              {devCode && (
-                <div className="m-row" style={{ justifyContent: "center", marginBottom: 20 }}>
-                  <span className="m-hint-chip" style={{ fontSize: 11 }}>
-                    Dev mode · your code: <strong style={{ fontFamily: "var(--mono)" }}>{devCode}</strong>
-                  </span>
-                </div>
-              )}
               {err && <div style={{ color: "var(--danger)", fontSize: 12, marginBottom: 12, textAlign: "center" }}>{err}</div>}
               <button
                 className="m-btn m-btn-primary m-btn-lg"
@@ -210,10 +199,7 @@ export default function SignInPage() {
                 {loading ? "Verifying…" : <><span>Verify</span> <ArrowRightIcon /></>}
               </button>
               <div className="m-mt16" style={{ textAlign: "center", fontSize: 13, color: "var(--fg-4)" }}>
-                Didn&apos;t get it?{" "}
-                <button onClick={sendCode} style={{ color: "var(--accent)" }} disabled={loading}>Resend</button>
-                {" · "}
-                <button onClick={() => { setStep("phone"); setOtp(["","","","","",""]); setDevCode(""); }} style={{ color: "var(--fg-3)" }}>
+                <button onClick={() => { setStep("phone"); setOtp(["","","",""]); }} style={{ color: "var(--fg-3)" }}>
                   Different number
                 </button>
               </div>
@@ -222,9 +208,8 @@ export default function SignInPage() {
 
           {step === "name" && (
             <>
-              <div className="m-signin-step-label">Step 03 — One last thing</div>
               <h2 className="m-signin-title">What should we call you?</h2>
-              <p className="m-signin-desc">Just a first name. We&apos;ll also add 100 free credits to your new account.</p>
+              <p className="m-signin-desc">Just a first name. We&apos;ll add 100 free credits to your new account.</p>
               <div className="m-field full">
                 <div className="m-label">Your name</div>
                 <input
