@@ -6,7 +6,7 @@ export type GiftResult = {
   store: string;
   url: string;
   imageUrl?: string;
-  badge?: "Best Value" | "Premium Choice";
+  badge?: string | null;
   inStock: boolean;
 };
 

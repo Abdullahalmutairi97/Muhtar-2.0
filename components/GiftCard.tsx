@@ -1,7 +1,6 @@
 import type { GiftResult } from "@/types";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface GiftCardProps {
   gift: GiftResult;
@@ -30,18 +29,6 @@ export default function GiftCard({
               (e.currentTarget as HTMLImageElement).style.display = "none";
             }}
           />
-        )}
-        {gift.badge && (
-          <span
-            className={cn(
-              "absolute top-2 left-2 rounded-full px-2.5 py-0.5 text-xs font-semibold",
-              gift.badge === "Best Value"
-                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-            )}
-          >
-            {gift.badge}
-          </span>
         )}
         {!gift.inStock && (
           <span className="absolute top-2 right-2 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground border border-border">
