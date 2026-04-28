@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     const { gender, age, interests, budget } = await req.json();
     const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genai.getGenerativeModel({ model: "gemini-2.5-flash-preview-04-17" });
+    const model = genai.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `You are a gift expert for Saudi Arabia with deep knowledge of what's available in Saudi stores.
 Recommend 4 specific real products that would genuinely delight this person.
