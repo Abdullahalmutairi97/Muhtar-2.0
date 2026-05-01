@@ -227,7 +227,7 @@ export default function SignInPage() {
                 <div className="m-label">Your name</div>
                 <input
                   className="m-input"
-                  placeholder="e.g. Noura"
+                  placeholder="Your name"
                   value={name}
                   autoFocus
                   onChange={(e) => setName(e.target.value)}
